@@ -13,18 +13,15 @@ type Player struct {
 	Name  string `json:"name"`
 	Score int    `json:"score"`
 }
-
 type Server struct {
 	players map[string]*Player
 	mu      sync.Mutex
 }
-
 func newServer() *Server {
 	return &Server{
 		players: make(map[string]*Player),
 	}
 }
-
 func (s *Server) addPlayer(w http.ResponseWriter, r *http.Request) {
 	var player Player
 	if err := json.NewDecoder(r.Body).Decode(&player); err != nil {
@@ -38,7 +35,6 @@ func (s *Server) addPlayer(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 }
-
 func (s *Server) getPlayer(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 
@@ -53,7 +49,6 @@ func (s *Server) getPlayer(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(player)
 }
-
 func (s *Server) updateScore(w http.ResponseWriter, r *http.Request) {
 	var update struct {
 		ID    string `json:"id"`
@@ -79,7 +74,6 @@ func (s *Server) updateScore(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
-
 func (s *Server) listPlayers(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	players := make([]*Player, 0, len(s.players))
@@ -90,14 +84,11 @@ func (s *Server) listPlayers(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(players)
 }
-
-func main() {
-	server := newServer()
-
-	http.HandleFunc("/addPlayer", server.addPlayer)
-	http.HandleFunc("/getPlayer", server.getPlayer)
-	http.HandleFunc("/updateScore", server.updateScore)
-	http.HandleFunc("/listPlayers", server.listPlayers)
+func (s *Server) Start() {
+	http.HandleFunc("/addPlayer", s.addPlayer)
+	http.HandleFunc("/getPlayer", s.getPlayer)
+	http.HandleFunc("/updateScore", s.updateScore)
+	http.HandleFunc("/listPlayers", s.listPlayers)
 
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
